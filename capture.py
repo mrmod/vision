@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import io
 import os
 import subprocess as sp
@@ -31,25 +30,33 @@ class CanonCapture(object):
             key = cv2.waitKey(25) # 25 ms wait for a keypress
             if key == ord('q'):
                 break
-            self.zoom(key)
+            else:
+                self.zoom(key)
+
     def zoom(self, key):
         # Focus on a point further away
-        if key == ord('k'):
-            print("Zooming in")
-            w = gp.check_result(gp.gp_widget_new(gp.GP_WIDGET_TEXT, "focus"))
-            gp.gp_widget_set_name(w, "manualfocusdrive")
-            gp.gp_widget_set_value(w, "Far 3")
-            gp.gp_camera_set_single_config(self.camera, "manualfocusdrive", w)
+        if key == ord('i'):
+            self.zoom_in()
         # Focus on a nearer point
-        if key == ord('j'):
-            print("Zooming out")
-            w = gp.check_result(gp.gp_widget_new(gp.GP_WIDGET_TEXT, "focus"))
-            gp.gp_widget_set_name(w, "manualfocusdrive")
-            gp.gp_widget_set_value(w, "Near 3")
-            gp.gp_camera_set_single_config(self.camera, "manualfocusdrive", w)
-#config = camera.list_config()
-# List of config Tuples [key, value]
-#config = gp.check_result(gp.gp_camera_list_config(camera))
+        if key == ord('o'):
+            self.zoom_out()
+    def zoom_out(self):
+        w = gp.check_result(gp.gp_widget_new(gp.GP_WIDGET_TEXT, "focus"))
+        gp.gp_widget_set_name(w, "manualfocusdrive")
+        gp.gp_widget_set_value(w, "Near 3")
+        gp.gp_camera_set_single_config(self.camera, "manualfocusdrive", w)
+
+    def zoom_in(self):
+        w = gp.check_result(gp.gp_widget_new(gp.GP_WIDGET_TEXT, "focus"))
+        gp.gp_widget_set_name(w, "manualfocusdrive")
+        gp.gp_widget_set_value(w, "Far 3")
+        gp.gp_camera_set_single_config(self.camera, "manualfocusdrive", w)
+
+    def configuration(self):
+        for option in self.camera.list_config():
+            print(option[0])
 
 if __name__ == "__main__":
-    CanonCapture().preview()
+    canon = CanonCapture()
+    #canon.configuration()
+    canon.preview()
