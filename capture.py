@@ -14,24 +14,37 @@ class CanonCapture(object):
         self.orb = cv2.ORB_create()
     def preview(self):
         while (True):
-            # print(dir(gp))
-            # camera.set_config
-            img_preview = gp.check_result(
+            preview = gp.check_result(
                     gp.gp_camera_capture_preview(self.camera))
-            image = gp.check_result(
-                    gp.gp_file_get_data_and_size(img_preview))
-            jpg = memoryview(image)
-            dec = cv2.imdecode(np.array(jpg), 1)
-            kp = self.orb.detect(dec, None)
-            kp, des = self.orb.compute(dec, kp)
-            frame = cv2.drawKeypoints(dec, kp, None, color=(0,0,255), flags=0)
+            preview_data = gp.check_result(
+                    gp.gp_file_get_data_and_size(preview))
+            # Convert the preview data to an image
+            # 1 CV_LOAD_IMAGE_COLOR: 3 Channel color image
+            image = cv2.imdecode(
+                np.array(memoryview(preview_data)), 1) # Full color flag?
+            # Find keypoints
+            if not self.is_blurry(image):
+                print("Good image")
+            kp = self.orb.detect(image, None)
+            kp, des = self.orb.compute(image, kp)
+            frame = cv2.drawKeypoints(image, kp, None, color=(0,0,255), flags=0)
+            # Display
             cv2.imshow('frame', frame)
-            #cv2.imshow('image', dec)
             key = cv2.waitKey(25) # 25 ms wait for a keypress
             if key == ord('q'):
                 break
             else:
                 self.zoom(key)
+    def is_blurry(self, image):
+        # Laplacian variance
+        v = cv2.Laplacian(image, cv2.CV_64F).var()
+        # n > 80 : Pretty good human
+        # n > 40 : With a struggle; hand-writing @ 1ft
+        # n < 10 : Utter rubbish
+        # Always, always, always, you terrible photographer
+        if v > 45:
+            return False
+        return True
 
     def zoom(self, key):
         # Focus on a point further away
