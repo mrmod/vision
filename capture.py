@@ -12,16 +12,18 @@ class CanonCapture(object):
         self.camera = gp.check_result(gp.gp_camera_new())
         gp.check_result(gp.gp_camera_init(self.camera))
         self.orb = cv2.ORB_create()
-    def preview(self):
+    def camera_image(self):
+        preview = gp.check_result(
+            gp.gp_camera_capture_preview(self.camera))
+        preview_data = gp.check_result(
+            gp.gp_file_get_data_and_size(preview))
+        # Convert the preview data to an image
+        # 1 CV_LOAD_IMAGE_COLOR: 3 Channel color image
+        return cv2.imdecode(
+            np.array(memoryview(preview_data)), 1)
+    def stream(self):
         while (True):
-            preview = gp.check_result(
-                    gp.gp_camera_capture_preview(self.camera))
-            preview_data = gp.check_result(
-                    gp.gp_file_get_data_and_size(preview))
-            # Convert the preview data to an image
-            # 1 CV_LOAD_IMAGE_COLOR: 3 Channel color image
-            image = cv2.imdecode(
-                np.array(memoryview(preview_data)), 1) # Full color flag?
+            image = self.camera_image()
             kp = self.orb.detect(image, None)
             kp, des = self.orb.compute(image, kp)
             frame = cv2.drawKeypoints(image, kp, None, color=(0,0,255), flags=0)
@@ -79,4 +81,4 @@ class CanonCapture(object):
 if __name__ == "__main__":
     canon = CanonCapture()
     #canon.configuration()
-    canon.preview()
+    canon.stream()
