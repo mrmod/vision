@@ -22,12 +22,12 @@ class CanonCapture(object):
             # 1 CV_LOAD_IMAGE_COLOR: 3 Channel color image
             image = cv2.imdecode(
                 np.array(memoryview(preview_data)), 1) # Full color flag?
-            # Find keypoints
-            if not self.is_blurry(image):
-                print("Good image")
             kp = self.orb.detect(image, None)
             kp, des = self.orb.compute(image, kp)
             frame = cv2.drawKeypoints(image, kp, None, color=(0,0,255), flags=0)
+            # Find keypoints
+            if not self.blurry(image) and self.stable(kp):
+                print("Good image")
             # Display
             cv2.imshow('frame', frame)
             key = cv2.waitKey(25) # 25 ms wait for a keypress
@@ -35,7 +35,7 @@ class CanonCapture(object):
                 break
             else:
                 self.zoom(key)
-    def is_blurry(self, image):
+    def blurry(self, image):
         # Laplacian variance
         v = cv2.Laplacian(image, cv2.CV_64F).var()
         # n > 80 : Pretty good human
@@ -45,6 +45,13 @@ class CanonCapture(object):
         if v > 45:
             return False
         return True
+    def stable(self, keypoints):
+        # > 400 : Very good human
+        # > 250 : Camera is fairly stable
+        # > 150 : Well, at least it's in someone's hands
+        if len(keypoints) > 280:
+            return True
+        return False
 
     def zoom(self, key):
         # Focus on a point further away
